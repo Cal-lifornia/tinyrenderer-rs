@@ -47,14 +47,14 @@ pub fn draw_line(
         swap(&mut ay, &mut by);
     }
 
-    for x in ax - 1..=bx - 1 {
+    for x in ax..bx {
         let t = (x - ax) as f64 / (bx - ax) as f64;
         let y = (ay as f64 + (by - ay) as f64 * t).round();
 
         if steep {
-            image.put_pixel(y as u32, x as u32, colour);
+            image.put_pixel((y - 1.0) as u32, (x as f32 - 1.0) as u32, colour);
         } else {
-            image.put_pixel(x as u32, y as u32, colour);
+            image.put_pixel((x as f32 - 1.0) as u32, (y - 1.0) as u32, colour);
         }
     }
 }

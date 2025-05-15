@@ -41,17 +41,25 @@ impl Obj {
     }
 
     pub fn render(self, image: &mut RgbImage, colour: Rgb<u8>) {
-        println!("341: {}", self.points[340].x());
+        println!("242: {}", self.points[242].y());
         for i in 0..self.faces.len() {
             let face = self.faces[i].clone();
             for j in 0..3 {
                 let v0 = self.points[face[j]];
                 let v1 = self.points[face[(j + 1) % 3]];
-                // println!("indice1: {}; indice2: {}", face[j], face[(j + 1) % 3]);
                 let x0 = ((v0.x() + 1.) * (image.width() as f32) / 2.) as isize;
                 let y0 = ((v0.y() + 1.) * (image.height() as f32) / 2.) as isize;
                 let x1 = ((v1.x() + 1.) * (image.width() as f32) / 2.) as isize;
                 let y1 = ((v1.y() + 1.) * (image.height() as f32) / 2.) as isize;
+                // let x0 = ((v0.x() + 1.) * (image.width() as f32) / 2.)
+                //     .clamp(0.0, (image.width() - 1) as f32) as isize;
+                // let y0 = ((v0.y() + 1.) * (image.height() as f32) / 2.)
+                //     .clamp(0.0, (image.height() - 1) as f32) as isize;
+                // let x1 = ((v1.x() + 1.) * (image.width() as f32) / 2.)
+                //     .clamp(0.0, (image.width() - 1) as f32) as isize;
+                // let y1 = ((v1.y() + 1.) * (image.height() as f32) / 2.)
+                //     .clamp(0.0, (image.height() - 1) as f32) as isize;
+                // println!("indice1: {}; indice2: {}", face[j], face[(j + 1) % 3]);
                 // println!("x0: {}; y0: {}; x1: {}; y1: {}", x0, y0, x1, y1);
                 draw_line(x0, y0, x1, y1, image, colour)
             }
