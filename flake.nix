@@ -64,7 +64,7 @@
               cargo-edit
               cargo-watch
               rust-analyzer
-              imagemagick_light
+              imagemagick
             ];
 
             env = {

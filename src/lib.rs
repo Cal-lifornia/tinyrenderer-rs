@@ -1,4 +1,4 @@
-use std::{fmt::Display, mem::swap, ops::Mul};
+use std::{mem::swap, ops::Mul};
 
 use image::{Rgb, RgbImage};
 use num_traits::Num;
@@ -9,6 +9,10 @@ pub mod obj;
 pub struct Point<T: Num + Copy>(pub T, pub T, pub T);
 
 impl<T: Num + Mul + Copy> Point<T> {
+    pub fn new(x: T, y: T, z: T) -> Self {
+        Self(x, y, z)
+    }
+
     pub fn x(&self) -> T {
         self.0
     }
@@ -22,6 +26,12 @@ impl<T: Num + Mul + Copy> Point<T> {
     }
 }
 
+impl From<Point<f32>> for Point<isize> {
+    fn from(value: Point<f32>) -> Self {
+        Self(value.0 as isize, value.1 as isize, value.2 as isize)
+    }
+}
+
 pub fn draw_line(
     mut ax: isize,
     mut ay: isize,
@@ -30,11 +40,6 @@ pub fn draw_line(
     image: &mut RgbImage,
     colour: Rgb<u8>,
 ) {
-    // let mut ax = 64 - p1.x();
-    // let mut ay = image.height() as isize - p1.y();
-    // let mut bx = 64 - p2.x();
-    // let mut by = image.height() as isize - p2.y();
-
     let steep: bool = (ax - bx).abs() < (ay - by).abs();
     if steep {
         swap(&mut ax, &mut ay);
@@ -52,9 +57,25 @@ pub fn draw_line(
         let y = (ay as f64 + (by - ay) as f64 * t).round();
 
         if steep {
-            image.put_pixel((y - 1.0) as u32, (x as f32 - 1.0) as u32, colour);
+            image.put_pixel(y as u32, x as u32, colour);
         } else {
-            image.put_pixel((x as f32 - 1.0) as u32, (y - 1.0) as u32, colour);
+            image.put_pixel(x as u32, y as u32, colour);
         }
     }
+}
+
+pub fn draw_triangle(
+    p1: Point<isize>,
+    p2: Point<isize>,
+    p3: Point<isize>,
+    image: &mut RgbImage,
+    colour: Rgb<u8>,
+) {
+    draw_line(p1.x(), p1.y(), p2.x(), p2.y(), image, colour);
+    draw_line(p2.x(), p2.y(), p3.x(), p3.y(), image, colour);
+    draw_line(p3.x(), p3.y(), p1.x(), p1.y(), image, colour);
+}
+
+pub fn draw_dot(x: isize, y: isize, image: &mut RgbImage, colour: Rgb<u8>) {
+    image.put_pixel(x as u32, y as u32, colour);
 }

@@ -1,5 +1,4 @@
 use std::{
-    borrow::{Borrow, BorrowMut},
     fs::File,
     io::{self, BufRead},
     path::Path,
@@ -7,7 +6,7 @@ use std::{
 
 use image::{Rgb, RgbImage};
 
-use crate::{draw_line, Point};
+use crate::{draw_dot, draw_line, Point};
 
 #[derive(Debug)]
 pub struct Obj {
@@ -40,28 +39,24 @@ impl Obj {
         }
     }
 
-    pub fn render(self, image: &mut RgbImage, colour: Rgb<u8>) {
-        println!("242: {}", self.points[242].y());
+    pub fn render_wireframe(self, image: &mut RgbImage, colour: Rgb<u8>) {
         for i in 0..self.faces.len() {
             let face = self.faces[i].clone();
             for j in 0..3 {
                 let v0 = self.points[face[j]];
                 let v1 = self.points[face[(j + 1) % 3]];
-                let x0 = ((v0.x() + 1.) * (image.width() as f32) / 2.) as isize;
-                let y0 = ((v0.y() + 1.) * (image.height() as f32) / 2.) as isize;
-                let x1 = ((v1.x() + 1.) * (image.width() as f32) / 2.) as isize;
-                let y1 = ((v1.y() + 1.) * (image.height() as f32) / 2.) as isize;
-                // let x0 = ((v0.x() + 1.) * (image.width() as f32) / 2.)
-                //     .clamp(0.0, (image.width() - 1) as f32) as isize;
-                // let y0 = ((v0.y() + 1.) * (image.height() as f32) / 2.)
-                //     .clamp(0.0, (image.height() - 1) as f32) as isize;
-                // let x1 = ((v1.x() + 1.) * (image.width() as f32) / 2.)
-                //     .clamp(0.0, (image.width() - 1) as f32) as isize;
-                // let y1 = ((v1.y() + 1.) * (image.height() as f32) / 2.)
-                //     .clamp(0.0, (image.height() - 1) as f32) as isize;
-                // println!("indice1: {}; indice2: {}", face[j], face[(j + 1) % 3]);
+                let x0 = ((v0.x() + 1.) * (image.width() as f32) / 2.)
+                    .clamp(0.0, (image.width() - 1) as f32) as isize;
+                let y0 = ((v0.y() + 1.) * (image.height() as f32) / 2.)
+                    .clamp(0.0, (image.height() - 1) as f32) as isize;
+                let x1 = ((v1.x() + 1.) * (image.width() as f32) / 2.)
+                    .clamp(0.0, (image.width() - 1) as f32) as isize;
+                let y1 = ((v1.y() + 1.) * (image.height() as f32) / 2.)
+                    .clamp(0.0, (image.height() - 1) as f32) as isize;
                 // println!("x0: {}; y0: {}; x1: {}; y1: {}", x0, y0, x1, y1);
-                draw_line(x0, y0, x1, y1, image, colour)
+                draw_line(x0, y0, x1, y1, image, colour);
+                draw_dot(x0, y0, image, Rgb([255, 255, 255]));
+                draw_dot(x1, y1, image, Rgb([255, 255, 255]));
             }
         }
     }
