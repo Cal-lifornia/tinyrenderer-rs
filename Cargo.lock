@@ -963,6 +963,7 @@ dependencies = [
  "clap",
  "image",
  "num-traits",
+ "rayon",
 ]
 
 [[package]]

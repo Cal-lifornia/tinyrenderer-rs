@@ -1,14 +1,22 @@
-use std::{mem::swap, ops::Mul};
+use std::{mem::swap, ops::Mul, usize};
 
-use image::{Rgb, RgbImage};
+use image::{ImageBuffer, Rgb, RgbImage};
 use num_traits::Num;
+use rayon::prelude::*;
 
+pub mod grid;
 pub mod obj;
+pub mod renderer;
+
+pub const BLUE: Rgb<u8> = Rgb([64, 128, 255]);
+pub const GREEN: Rgb<u8> = Rgb([0, 255, 0]);
+pub const RED: Rgb<u8> = Rgb([255, 0, 0]);
+pub const YELLOW: Rgb<u8> = Rgb([255, 200, 0]);
 
 #[derive(Debug, Clone, Copy)]
-pub struct Point<T: Num + Copy>(pub T, pub T, pub T);
+pub struct Vec3<T: Num + Copy>(pub T, pub T, pub T);
 
-impl<T: Num + Mul + Copy> Point<T> {
+impl<T: Num + Mul + Copy> Vec3<T> {
     pub fn new(x: T, y: T, z: T) -> Self {
         Self(x, y, z)
     }
@@ -26,8 +34,8 @@ impl<T: Num + Mul + Copy> Point<T> {
     }
 }
 
-impl From<Point<f32>> for Point<isize> {
-    fn from(value: Point<f32>) -> Self {
+impl From<Vec3<f32>> for Vec3<isize> {
+    fn from(value: Vec3<f32>) -> Self {
         Self(value.0 as isize, value.1 as isize, value.2 as isize)
     }
 }
@@ -40,6 +48,9 @@ pub fn draw_line(
     image: &mut RgbImage,
     colour: Rgb<u8>,
 ) {
+    ay = (image.height() - ay as u32) as isize;
+    by = (image.height() - by as u32) as isize;
+
     let steep: bool = (ax - bx).abs() < (ay - by).abs();
     if steep {
         swap(&mut ax, &mut ay);
@@ -62,18 +73,6 @@ pub fn draw_line(
             image.put_pixel(x as u32, y as u32, colour);
         }
     }
-}
-
-pub fn draw_triangle(
-    p1: Point<isize>,
-    p2: Point<isize>,
-    p3: Point<isize>,
-    image: &mut RgbImage,
-    colour: Rgb<u8>,
-) {
-    draw_line(p1.x(), p1.y(), p2.x(), p2.y(), image, colour);
-    draw_line(p2.x(), p2.y(), p3.x(), p3.y(), image, colour);
-    draw_line(p3.x(), p3.y(), p1.x(), p1.y(), image, colour);
 }
 
 pub fn draw_dot(x: isize, y: isize, image: &mut RgbImage, colour: Rgb<u8>) {

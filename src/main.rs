@@ -1,8 +1,12 @@
-use std::{path::PathBuf, process};
+use image::{ImageBuffer, Rgb, RgbImage};
+use tinyrenderer_rs::{
+    grid::{Grid, Point},
+    renderer::draw_triangle,
+    Vec3,
+};
 
-use clap::{arg, command, value_parser};
-use image::{Rgb, RgbImage};
-use tinyrenderer_rs::{draw_triangle, obj::Obj, Point};
+const WIDTH: usize = 128;
+const HEIGHT: usize = 128;
 
 fn main() {
     // let matches = command!()
@@ -27,32 +31,36 @@ fn main() {
     //     std::process::exit(1);
     // }
 
-    let mut img = RgbImage::new(128, 128);
-
-    // let blue = Rgb([64, 128, 255]);
-    let green = Rgb([0, 255, 0]);
-    let red = Rgb([255, 0, 0]);
-    let yellow = Rgb([255, 200, 0]);
-
     // let model = Obj::from(file_path).unwrap();
 
     // println!("{:#?}", model)
 
     // model.render_wireframe(&mut img, red);
 
-    let p1: Point<isize> = Point::new(7, 45, 0);
-    let p2: Point<isize> = Point::new(35, 100, 0);
-    let p3: Point<isize> = Point::new(45, 60, 0);
-    let p4: Point<isize> = Point::new(120, 35, 0);
-    let p5: Point<isize> = Point::new(90, 5, 0);
-    let p6: Point<isize> = Point::new(45, 110, 0);
-    let p7: Point<isize> = Point::new(115, 83, 0);
-    let p8: Point<isize> = Point::new(80, 90, 0);
-    let p9: Point<isize> = Point::new(85, 120, 0);
+    let p1: Vec3<isize> = Vec3::new(7, 45, 0);
+    let p2: Vec3<isize> = Vec3::new(35, 100, 0);
+    let p3: Vec3<isize> = Vec3::new(45, 60, 0);
+    let p4: Vec3<isize> = Vec3::new(120, 35, 0);
+    let p5: Vec3<isize> = Vec3::new(90, 5, 0);
+    let p6: Vec3<isize> = Vec3::new(45, 110, 0);
+    let p7: Vec3<isize> = Vec3::new(115, 83, 0);
+    let p8: Vec3<isize> = Vec3::new(80, 90, 0);
+    let p9: Vec3<isize> = Vec3::new(85, 120, 0);
 
-    draw_triangle(p1, p2, p3, &mut img, green);
-    draw_triangle(p4, p5, p6, &mut img, red);
-    draw_triangle(p7, p8, p9, &mut img, yellow);
+    let mut grid: Grid<[u8; 3], WIDTH, HEIGHT> = Default::default();
 
-    img.save("./output.png").unwrap();
+    draw_triangle(p1, p2, p3, &mut grid);
+    draw_triangle(p4, p5, p6, &mut grid);
+    draw_triangle(p7, p8, p9, &mut grid);
+
+    let mut img_buf: RgbImage = ImageBuffer::new(grid.width() as u32, grid.height() as u32);
+    for (x, y, pixel) in img_buf.enumerate_pixels_mut() {
+        let color = grid.get(&Point {
+            x: x as usize,
+            y: y as usize,
+        });
+        *pixel = Rgb(*color);
+    }
+
+    img_buf.save("output/test.png").unwrap();
 }

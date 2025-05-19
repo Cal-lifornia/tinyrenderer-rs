@@ -6,11 +6,11 @@ use std::{
 
 use image::{Rgb, RgbImage};
 
-use crate::{draw_dot, draw_line, Point};
+use crate::{draw_dot, draw_line, Vec3};
 
 #[derive(Debug)]
 pub struct Obj {
-    points: Vec<Point<f32>>,
+    points: Vec<Vec3<f32>>,
     faces: Vec<Vec<usize>>,
 }
 
@@ -21,7 +21,7 @@ impl Obj {
     {
         if let Ok(lines) = read_lines(filename) {
             // Obj files indices start at 1, so create a dummy entry to avoid instantiating later
-            let mut points: Vec<Point<f32>> = vec![];
+            let mut points: Vec<Vec3<f32>> = vec![];
 
             let mut faces: Vec<Vec<usize>> = vec![];
 
@@ -70,14 +70,14 @@ where
     Ok(io::BufReader::new(file).lines())
 }
 
-fn string_to_point(line: String) -> Point<f32> {
+fn string_to_point(line: String) -> Vec3<f32> {
     let splits: Vec<f32> = line
         .split_ascii_whitespace()
         .take(3)
         .map(|x| x.parse::<f32>().unwrap())
         .collect();
 
-    Point(splits[0], splits[1], splits[2])
+    Vec3(splits[0], splits[1], splits[2])
 }
 
 fn string_to_face(line: String) -> Vec<usize> {

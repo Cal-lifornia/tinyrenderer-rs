@@ -4,10 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-image = "0.25.6"
+image = { version = "0.25.6", features = ["rayon"] }
 num-traits = { version = "0.2", default-features = true }
 anyhow = "1.0"
 clap = { version = "4.5.38", features = [
   "derive",
   "cargo",
 ], default-features = true }
+rayon = "1.10.0"

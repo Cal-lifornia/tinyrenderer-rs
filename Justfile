@@ -9,8 +9,8 @@ drun *ARGS:
 dbuild:
   cargo build
 
-flip *ARGS:
-  magick {{ARGS}} -flip {{ARGS}}
+flip IMAGE:
+  magick {{IMAGE}} -flip {{IMAGE}}
 
 # Run 'cargo watch' to run the project (auto-recompiles)
 watch *ARGS:
