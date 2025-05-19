@@ -30,13 +30,15 @@ impl<T, const W: usize, const H: usize> Grid<T, W, H> {
     /// the desired value of that item.
     pub fn set_all_parallel<F>(&mut self, setter: F)
     where
-        F: Send + Sync + Fn(Point) -> T,
+        F: Send + Sync + Fn(Point) -> Option<T>,
         T: Send,
     {
         use rayon::prelude::*;
         self.array.par_iter_mut().enumerate().for_each(|(y, row)| {
             for (x, item) in row.iter_mut().enumerate() {
-                *item = setter(Point { x, y });
+                if let Some(val) = setter(Point { x, y }) {
+                    *item = val;
+                }
             }
         })
     }

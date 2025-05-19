@@ -42,7 +42,7 @@ fn calculate_pixel(
     v1: Vec3<isize>,
     v2: Vec3<isize>,
     v3: Vec3<isize>,
-) -> impl Send + Sync + Fn(Point) -> [u8; 3] {
+) -> impl Send + Sync + Fn(Point) -> Option<[u8; 3]> {
     move |Point { x, y }| {
         let alpha = signed_triangle_area(x as isize, y as isize, v2.x(), v2.y(), v3.x(), v3.y())
             / total_area;
@@ -51,9 +51,9 @@ fn calculate_pixel(
         let gamma = signed_triangle_area(x as isize, y as isize, v1.x(), v1.y(), v2.x(), v2.y())
             / total_area;
         if alpha < 0.0 || beta < 0.0 || gamma < 0.0 {
-            [0, 0, 0]
+            None
         } else {
-            [0, 255, 0]
+            Some([0, 255, 0])
         }
     }
 }
