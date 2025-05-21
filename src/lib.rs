@@ -34,6 +34,16 @@ impl<T: Num + Mul + Copy> Vec3<T> {
     }
 }
 
+impl Vec3<f32> {
+    pub fn scale(&self, width: f32, height: f32, depth: f32) -> Self {
+        let x = (self.x() + 1.) * width / 2.;
+        let y = (self.y() + 1.) * height / 2.;
+        let z = (self.z() + 1.) * depth / 2.;
+
+        Self(x, y, z)
+    }
+}
+
 impl From<Vec3<f32>> for Vec3<isize> {
     fn from(value: Vec3<f32>) -> Self {
         Self(value.0 as isize, value.1 as isize, value.2 as isize)

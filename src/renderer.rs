@@ -21,20 +21,14 @@ pub fn draw_triangle<const W: usize, const H: usize>(
     v2: Vec3<isize>,
     v3: Vec3<isize>,
     pixels: &mut Grid<[u8; 3], W, H>,
+    colour: [u8; 3],
 ) {
-    let bbminx = (v1.x().min(v2.x())).min(v3.x());
-    let bbminy = (v1.y().min(v2.y())).min(v3.y());
-    let bbmaxx = (v1.x().max(v2.x())).max(v3.x());
-    let bbmaxy = (v1.y().max(v2.y())).max(v3.y());
-
-    println!(
-        "minx: {}, miny {}, maxx {}, maxy {}",
-        bbminx, bbminy, bbmaxx, bbmaxy
-    );
-
     let total_area = signed_triangle_area(v1.x(), v1.y(), v2.x(), v2.y(), v3.x(), v3.y());
+    if total_area < 1.0 {
+        return;
+    }
 
-    pixels.set_all_parallel(calculate_pixel(total_area, v1, v2, v3))
+    pixels.set_all_parallel(calculate_pixel(total_area, v1, v2, v3, colour))
 }
 
 fn calculate_pixel(
@@ -42,19 +36,19 @@ fn calculate_pixel(
     v1: Vec3<isize>,
     v2: Vec3<isize>,
     v3: Vec3<isize>,
-) -> impl Send + Sync + Fn(Point) -> Option<[u8; 3]> {
-    move |Point { x, y }| {
-        let alpha = signed_triangle_area(x as isize, y as isize, v2.x(), v2.y(), v3.x(), v3.y())
-            / total_area;
-        let beta = signed_triangle_area(x as isize, y as isize, v3.x(), v3.y(), v1.x(), v1.y())
-            / total_area;
-        let gamma = signed_triangle_area(x as isize, y as isize, v1.x(), v1.y(), v2.x(), v2.y())
-            / total_area;
-        if alpha < 0.0 || beta < 0.0 || gamma < 0.0 {
-            None
-        } else {
-            Some([0, 255, 0])
-        }
+    colour: [u8; 3],
+    p: Point,
+) -> Option<[u8; 3]> {
+    let alpha = signed_triangle_area(p.x as isize, p.y as isize, v2.x(), v2.y(), v3.x(), v3.y())
+        / total_area;
+    let beta = signed_triangle_area(p.x as isize, p.y as isize, v3.x(), v3.y(), v1.x(), v1.y())
+        / total_area;
+    let gamma = signed_triangle_area(p.x as isize, p.y as isize, v1.x(), v1.y(), v2.x(), v2.y())
+        / total_area;
+    if alpha < 0.0 || beta < 0.0 || gamma < 0.0 {
+        None
+    } else {
+        Some(colour)
     }
 }
 

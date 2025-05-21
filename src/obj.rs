@@ -5,8 +5,9 @@ use std::{
 };
 
 use image::{Rgb, RgbImage};
+use rand::Rng;
 
-use crate::{draw_dot, draw_line, Vec3};
+use crate::{draw_dot, draw_line, grid::Grid, renderer::draw_triangle, Vec3};
 
 #[derive(Debug)]
 pub struct Obj {
@@ -59,6 +60,22 @@ impl Obj {
                 draw_dot(x1, y1, image, Rgb([255, 255, 255]));
             }
         }
+    }
+    pub fn render<const W: usize, const H: usize>(self, pixels: &mut Grid<[u8; 3], W, H>) {
+        self.faces.iter().for_each(|face| {
+            let v0 = self.points[face[0]].scale(pixels.width() as f32, pixels.height() as f32, 1.0);
+            let v1 = self.points[face[1]].scale(pixels.width() as f32, pixels.height() as f32, 1.0);
+            let v2 = self.points[face[2]].scale(pixels.width() as f32, pixels.height() as f32, 1.0);
+
+            let mut rng = rand::rng();
+            let random_colour: [u8; 3] = [
+                rng.random_range(0..=255) as u8,
+                rng.random_range(0..=255) as u8,
+                rng.random_range(0..=255) as u8,
+            ];
+
+            draw_triangle(v0.into(), v1.into(), v2.into(), pixels, random_colour)
+        })
     }
 }
 
