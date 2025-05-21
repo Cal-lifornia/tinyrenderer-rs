@@ -72,7 +72,26 @@ impl Obj {
     }
     pub fn render<const W: usize, const H: usize>(mut self, pixels: &mut Grid<[u8; 3], W, H>) {
         self.scale_all_verts_parallel(pixels.width() as f32, pixels.height() as f32, 1.0);
-        pixels.set_all_parallel(self.raster_all_triangles());
+        for face in self.faces {
+            let v1: Vec3<isize> = self.verts[face[0]].into();
+            let v2: Vec3<isize> = self.verts[face[1]].into();
+            let v3: Vec3<isize> = self.verts[face[2]].into();
+
+            let total_area = signed_triangle_area(v1, v2, v3);
+
+            if total_area < 1.0 {
+                continue;
+            }
+
+            let mut rando = rand::rng();
+            let colour: [u8; 3] = [
+                rando.random_range(0..255),
+                rando.random_range(0..255),
+                rando.random_range(0..255),
+            ];
+
+            pixels.set_all_parallel(calculate_pixel(total_area, v1, v2, v3, colour));
+        }
     }
 
     fn scale_all_verts_parallel(&mut self, width: f32, height: f32, depth: f32) {
@@ -80,35 +99,6 @@ impl Obj {
         self.verts.par_iter_mut().for_each(|point| {
             *point = point.scale(width, height, depth);
         })
-    }
-    fn raster_all_triangles(self) -> impl Send + Sync + Fn(Point) -> Option<[u8; 3]> {
-        move |point| {
-            for face in self.faces.clone() {
-                let v1: Vec3<isize> = self.verts[face[0]].into();
-                let v2: Vec3<isize> = self.verts[face[1]].into();
-                let v3: Vec3<isize> = self.verts[face[2]].into();
-
-                let total_area = signed_triangle_area(v1, v2, v3);
-
-                if total_area < 1.0 {
-                    continue;
-                }
-
-                let mut rando = rand::rng();
-                let colour: [u8; 3] = [
-                    rando.random_range(0..255),
-                    rando.random_range(0..255),
-                    rando.random_range(0..255),
-                ];
-
-                let result = calculate_pixel(total_area, v1, v2, v3, colour, point);
-                match result {
-                    Some(_) => return result,
-                    None => continue,
-                }
-            }
-            None
-        }
     }
 }
 

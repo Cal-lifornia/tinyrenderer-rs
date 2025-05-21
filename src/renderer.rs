@@ -33,15 +33,16 @@ pub fn calculate_pixel(
     v2: Vec3<isize>,
     v3: Vec3<isize>,
     colour: [u8; 3],
-    p: Point,
-) -> Option<[u8; 3]> {
-    let alpha = signed_triangle_area(p.into(), v2, v3) / total_area;
-    let beta = signed_triangle_area(p.into(), v3, v1) / total_area;
-    let gamma = signed_triangle_area(p.into(), v1, v2) / total_area;
-    if alpha < 0.0 || beta < 0.0 || gamma < 0.0 {
-        None
-    } else {
-        Some(colour)
+) -> impl Send + Sync + Fn(Point) -> Option<[u8; 3]> {
+    move |point| {
+        let alpha = signed_triangle_area(point.into(), v2, v3) / total_area;
+        let beta = signed_triangle_area(point.into(), v3, v1) / total_area;
+        let gamma = signed_triangle_area(point.into(), v1, v2) / total_area;
+        if alpha < 0.0 || beta < 0.0 || gamma < 0.0 {
+            None
+        } else {
+            Some(colour)
+        }
     }
 }
 
