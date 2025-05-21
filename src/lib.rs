@@ -1,5 +1,6 @@
 use std::{mem::swap, ops::Mul, usize};
 
+use grid::Point;
 use image::{ImageBuffer, Rgb, RgbImage};
 use num_traits::Num;
 use rayon::prelude::*;
@@ -13,8 +14,20 @@ pub const GREEN: Rgb<u8> = Rgb([0, 255, 0]);
 pub const RED: Rgb<u8> = Rgb([255, 0, 0]);
 pub const YELLOW: Rgb<u8> = Rgb([255, 200, 0]);
 
+pub fn signed_triangle_area(v1: Vec3<isize>, v2: Vec3<isize>, v3: Vec3<isize>) -> f64 {
+    0.5 * ((v2.y() - v1.y()) * (v2.x() + v1.x())
+        + (v3.y() - v2.y()) * (v3.x() + v2.x())
+        + (v1.y() - v3.y()) * (v1.y() + v3.y())) as f64
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct Vec3<T: Num + Copy>(pub T, pub T, pub T);
+
+impl From<Point> for Vec3<isize> {
+    fn from(value: Point) -> Self {
+        Self(value.x as isize, value.y as isize, 0)
+    }
+}
 
 impl<T: Num + Mul + Copy> Vec3<T> {
     pub fn new(x: T, y: T, z: T) -> Self {

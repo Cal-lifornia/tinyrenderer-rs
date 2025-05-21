@@ -5,8 +5,6 @@ use image::{ImageBuffer, Rgb, RgbImage};
 use tinyrenderer_rs::{
     grid::{Grid, Point},
     obj::Obj,
-    renderer::draw_triangle,
-    Vec3,
 };
 
 const WIDTH: usize = 1000;

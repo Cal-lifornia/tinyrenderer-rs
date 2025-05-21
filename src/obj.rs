@@ -6,12 +6,18 @@ use std::{
 
 use image::{Rgb, RgbImage};
 use rand::Rng;
+use rayon::prelude::*;
 
-use crate::{draw_dot, draw_line, grid::Grid, renderer::draw_triangle, Vec3};
+use crate::{
+    draw_dot, draw_line,
+    grid::{Grid, Point},
+    renderer::calculate_pixel,
+    signed_triangle_area, Vec3,
+};
 
 #[derive(Debug)]
 pub struct Obj {
-    points: Vec<Vec3<f32>>,
+    verts: Vec<Vec3<f32>>,
     faces: Vec<Vec<usize>>,
 }
 
@@ -34,7 +40,10 @@ impl Obj {
                     _ => {}
                 }
             }
-            Some(Obj { points, faces })
+            Some(Obj {
+                verts: points,
+                faces,
+            })
         } else {
             None
         }
@@ -44,8 +53,8 @@ impl Obj {
         for i in 0..self.faces.len() {
             let face = self.faces[i].clone();
             for j in 0..3 {
-                let v0 = self.points[face[j]];
-                let v1 = self.points[face[(j + 1) % 3]];
+                let v0 = self.verts[face[j]];
+                let v1 = self.verts[face[(j + 1) % 3]];
                 let x0 = ((v0.x() + 1.) * (image.width() as f32) / 2.)
                     .clamp(0.0, (image.width() - 1) as f32) as isize;
                 let y0 = ((v0.y() + 1.) * (image.height() as f32) / 2.)
@@ -61,21 +70,45 @@ impl Obj {
             }
         }
     }
-    pub fn render<const W: usize, const H: usize>(self, pixels: &mut Grid<[u8; 3], W, H>) {
-        self.faces.iter().for_each(|face| {
-            let v0 = self.points[face[0]].scale(pixels.width() as f32, pixels.height() as f32, 1.0);
-            let v1 = self.points[face[1]].scale(pixels.width() as f32, pixels.height() as f32, 1.0);
-            let v2 = self.points[face[2]].scale(pixels.width() as f32, pixels.height() as f32, 1.0);
+    pub fn render<const W: usize, const H: usize>(mut self, pixels: &mut Grid<[u8; 3], W, H>) {
+        self.scale_all_verts_parallel(pixels.width() as f32, pixels.height() as f32, 1.0);
+        pixels.set_all_parallel(self.raster_all_triangles());
+    }
 
-            let mut rng = rand::rng();
-            let random_colour: [u8; 3] = [
-                rng.random_range(0..=255) as u8,
-                rng.random_range(0..=255) as u8,
-                rng.random_range(0..=255) as u8,
-            ];
-
-            draw_triangle(v0.into(), v1.into(), v2.into(), pixels, random_colour)
+    fn scale_all_verts_parallel(&mut self, width: f32, height: f32, depth: f32) {
+        use rayon::prelude::*;
+        self.verts.par_iter_mut().for_each(|point| {
+            *point = point.scale(width, height, depth);
         })
+    }
+    fn raster_all_triangles(self) -> impl Send + Sync + Fn(Point) -> Option<[u8; 3]> {
+        move |point| {
+            for face in self.faces.clone() {
+                let v1: Vec3<isize> = self.verts[face[0]].into();
+                let v2: Vec3<isize> = self.verts[face[1]].into();
+                let v3: Vec3<isize> = self.verts[face[2]].into();
+
+                let total_area = signed_triangle_area(v1, v2, v3);
+
+                if total_area < 1.0 {
+                    continue;
+                }
+
+                let mut rando = rand::rng();
+                let colour: [u8; 3] = [
+                    rando.random_range(0..255),
+                    rando.random_range(0..255),
+                    rando.random_range(0..255),
+                ];
+
+                let result = calculate_pixel(total_area, v1, v2, v3, colour, point);
+                match result {
+                    Some(_) => return result,
+                    None => continue,
+                }
+            }
+            None
+        }
     }
 }
 

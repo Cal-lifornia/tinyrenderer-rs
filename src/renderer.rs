@@ -4,7 +4,7 @@ use rayon::prelude::*;
 
 use crate::{
     grid::{Grid, Point},
-    Vec3,
+    signed_triangle_area, Vec3,
 };
 
 // pub struct Renderer {
@@ -12,26 +12,22 @@ use crate::{
 //     pub output_dir: &'static str,
 // }
 
-fn signed_triangle_area(ax: isize, ay: isize, bx: isize, by: isize, cx: isize, cy: isize) -> f64 {
-    0.5 * ((by - ay) * (bx + ax) + (cy - by) * (cx + bx) + (ay - cy) * (ax + cx)) as f64
-}
+// pub fn draw_triangle<const W: usize, const H: usize>(
+//     v1: Vec3<isize>,
+//     v2: Vec3<isize>,
+//     v3: Vec3<isize>,
+//     pixels: &mut Grid<[u8; 3], W, H>,
+//     colour: [u8; 3],
+// ) {
+//     let total_area = signed_triangle_area(v1.x(), v1.y(), v2.x(), v2.y(), v3.x(), v3.y());
+//     if total_area < 1.0 {
+//         return;
+//     }
 
-pub fn draw_triangle<const W: usize, const H: usize>(
-    v1: Vec3<isize>,
-    v2: Vec3<isize>,
-    v3: Vec3<isize>,
-    pixels: &mut Grid<[u8; 3], W, H>,
-    colour: [u8; 3],
-) {
-    let total_area = signed_triangle_area(v1.x(), v1.y(), v2.x(), v2.y(), v3.x(), v3.y());
-    if total_area < 1.0 {
-        return;
-    }
+//     pixels.set_all_parallel(calculate_pixel(total_area, v1, v2, v3, colour))
+// }
 
-    pixels.set_all_parallel(calculate_pixel(total_area, v1, v2, v3, colour))
-}
-
-fn calculate_pixel(
+pub fn calculate_pixel(
     total_area: f64,
     v1: Vec3<isize>,
     v2: Vec3<isize>,
@@ -39,12 +35,9 @@ fn calculate_pixel(
     colour: [u8; 3],
     p: Point,
 ) -> Option<[u8; 3]> {
-    let alpha = signed_triangle_area(p.x as isize, p.y as isize, v2.x(), v2.y(), v3.x(), v3.y())
-        / total_area;
-    let beta = signed_triangle_area(p.x as isize, p.y as isize, v3.x(), v3.y(), v1.x(), v1.y())
-        / total_area;
-    let gamma = signed_triangle_area(p.x as isize, p.y as isize, v1.x(), v1.y(), v2.x(), v2.y())
-        / total_area;
+    let alpha = signed_triangle_area(p.into(), v2, v3) / total_area;
+    let beta = signed_triangle_area(p.into(), v3, v1) / total_area;
+    let gamma = signed_triangle_area(p.into(), v1, v2) / total_area;
     if alpha < 0.0 || beta < 0.0 || gamma < 0.0 {
         None
     } else {
