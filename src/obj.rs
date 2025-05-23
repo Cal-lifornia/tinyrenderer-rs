@@ -6,13 +6,9 @@ use std::{
 
 use image::{Rgb, RgbImage};
 use rand::Rng;
-use rayon::prelude::*;
 
 use crate::{
-    draw_dot, draw_line,
-    grid::{Grid, Point},
-    renderer::calculate_pixel,
-    signed_triangle_area, Vec3,
+    draw_dot, draw_line, grid::Grid, renderer::calculate_pixel, signed_triangle_area, Vec3,
 };
 
 #[derive(Debug)]
@@ -71,12 +67,15 @@ impl Obj {
         }
     }
     pub fn render<const W: usize, const H: usize>(mut self, pixels: &mut Grid<[u8; 3], W, H>) {
-        self.scale_all_verts_parallel(pixels.width() as f32, pixels.height() as f32, 1.0);
+        self.scale_all_verts_parallel(pixels.width() as f32, pixels.height() as f32, 1000.0);
         for face in self.faces {
             let v1: Vec3<isize> = self.verts[face[0]].into();
             let v2: Vec3<isize> = self.verts[face[1]].into();
             let v3: Vec3<isize> = self.verts[face[2]].into();
 
+            // let v1: Vec3<isize> = self.verts[face[0]].scale(pixels.width() as f32, pixels.height() as f32, 0.0).into();
+            // let v2: Vec3<isize> = self.verts[face[1]].scale(pixels.width() as f32, pixels.height() as f32, 0.0).into();
+            // let v3: Vec3<isize> = self.verts[face[2]].scale(pixels.width() as f32, pixels.height() as f32, 0.0).into();
             let total_area = signed_triangle_area(v1, v2, v3);
 
             if total_area < 1.0 {
@@ -96,8 +95,13 @@ impl Obj {
 
     fn scale_all_verts_parallel(&mut self, width: f32, height: f32, depth: f32) {
         use rayon::prelude::*;
-        self.verts.par_iter_mut().for_each(|point| {
-            *point = point.scale(width, height, depth);
+        self.verts.par_iter_mut().for_each(|val| {
+            *val = val.scale(width, height, depth);
+        })
+    }
+    fn scale_all_verts(&mut self, width: f32, height: f32, depth: f32) {
+        self.verts.iter_mut().for_each(|val| {
+            *val = val.scale(width, height, depth);
         })
     }
 }

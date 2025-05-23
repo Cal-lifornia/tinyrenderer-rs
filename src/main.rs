@@ -2,10 +2,7 @@ use std::path::PathBuf;
 
 use clap::{arg, command, value_parser};
 use image::{ImageBuffer, Rgb, RgbImage};
-use tinyrenderer_rs::{
-    grid::{Grid, Point},
-    obj::Obj,
-};
+use tinyrenderer_rs::{grid::Grid, obj::Obj, Vec3};
 
 const WIDTH: usize = 1000;
 const HEIGHT: usize = 1000;
@@ -59,12 +56,11 @@ fn main() {
 
     let mut img_buf: RgbImage = ImageBuffer::new(grid.width() as u32, grid.height() as u32);
     for (x, y, pixel) in img_buf.enumerate_pixels_mut() {
-        let color = grid.get(&Point {
-            x: x as usize,
-            y: y as usize,
-        });
+        let color = grid.get(&Vec3::new(x as usize, y as usize, 1));
         *pixel = Rgb(*color);
     }
+
+    image::imageops::rotate180_in_place(&mut img_buf);
 
     img_buf.save("output/test.png").unwrap();
 }

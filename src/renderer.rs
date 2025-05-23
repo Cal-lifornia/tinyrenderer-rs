@@ -2,10 +2,7 @@ use std::mem::swap;
 
 use rayon::prelude::*;
 
-use crate::{
-    grid::{Grid, Point},
-    signed_triangle_area, Vec3,
-};
+use crate::{signed_triangle_area, Vec3};
 
 // pub struct Renderer {
 //     pub filename: &'static str,
@@ -33,19 +30,50 @@ pub fn calculate_pixel(
     v2: Vec3<isize>,
     v3: Vec3<isize>,
     colour: [u8; 3],
-) -> impl Send + Sync + Fn(Point) -> Option<[u8; 3]> {
-    move |point| {
-        let alpha = signed_triangle_area(point.into(), v2, v3) / total_area;
-        let beta = signed_triangle_area(point.into(), v3, v1) / total_area;
-        let gamma = signed_triangle_area(point.into(), v1, v2) / total_area;
+) -> impl Send + Sync + Fn(Vec3<usize>) -> Option<[u8; 3]> {
+    move |vec| {
+        // println!("x: {}, y: {}", point.x, point.y);
+        let alpha = signed_triangle_area(vec.into(), v2, v3) / total_area;
+        let beta = signed_triangle_area(vec.into(), v3, v1) / total_area;
+        let gamma = signed_triangle_area(vec.into(), v1, v2) / total_area;
         if alpha < 0.0 || beta < 0.0 || gamma < 0.0 {
             None
         } else {
+            // let printer: Vec3<isize> = vec.into();
+            // println!("vec: {},{},{}", printer.x(), printer.y(), printer.z());
+            // println!("v1: {},{},{}", v1.x(), v1.y(), v1.z());
+            // println!("v2: {},{},{}", v2.x(), v2.y(), v2.z());
+            // println!("v3: {},{},{}", v3.x(), v3.y(), v3.z());
+            // println!("a: {}, b: {}, g: {}", alpha, beta, gamma);
             Some(colour)
         }
     }
 }
 
+// let alpha = signed_triangle_area(
+//     vec.x() as isize,
+//     vec.y() as isize,
+//     v2.x(),
+//     v2.y(),
+//     v3.x(),
+//     v3.y(),
+// ) / total_area;
+// let beta = signed_triangle_area(
+//     vec.x() as isize,
+//     vec.y() as isize,
+//     v3.x(),
+//     v3.y(),
+//     v1.x(),
+//     v1.y(),
+// ) / total_area;
+// let gamma = signed_triangle_area(
+//     vec.x() as isize,
+//     vec.y() as isize,
+//     v1.x(),
+//     v1.y(),
+//     v2.x(),
+//     v2.y(),
+// ) / total_area;
 // if p1.y() > p2.y() {
 //     swap(&mut p1, &mut p2);
 // }

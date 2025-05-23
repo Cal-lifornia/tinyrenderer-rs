@@ -1,9 +1,7 @@
-use std::{mem::swap, ops::Mul, usize};
+use std::{mem::swap, ops::Mul};
 
-use grid::Point;
-use image::{ImageBuffer, Rgb, RgbImage};
+use image::{Rgb, RgbImage};
 use num_traits::Num;
-use rayon::prelude::*;
 
 pub mod grid;
 pub mod obj;
@@ -17,17 +15,13 @@ pub const YELLOW: Rgb<u8> = Rgb([255, 200, 0]);
 pub fn signed_triangle_area(v1: Vec3<isize>, v2: Vec3<isize>, v3: Vec3<isize>) -> f64 {
     0.5 * ((v2.y() - v1.y()) * (v2.x() + v1.x())
         + (v3.y() - v2.y()) * (v3.x() + v2.x())
-        + (v1.y() - v3.y()) * (v1.y() + v3.y())) as f64
+        + (v1.y() - v3.y()) * (v1.x() + v3.x())) as f64
 }
-
+// fn signed_triangle_area(ax: isize, ay: isize, bx: isize, by: isize, cx: isize, cy: isize) -> f64 {
+//     0.5 * ((by - ay) * (bx + ax) + (cy - by) * (cx + bx) + (ay - cy) * (ax + cx)) as f64
+// }
 #[derive(Debug, Clone, Copy)]
 pub struct Vec3<T: Num + Copy>(pub T, pub T, pub T);
-
-impl From<Point> for Vec3<isize> {
-    fn from(value: Point) -> Self {
-        Self(value.x as isize, value.y as isize, 0)
-    }
-}
 
 impl<T: Num + Mul + Copy> Vec3<T> {
     pub fn new(x: T, y: T, z: T) -> Self {
@@ -49,8 +43,8 @@ impl<T: Num + Mul + Copy> Vec3<T> {
 
 impl Vec3<f32> {
     pub fn scale(&self, width: f32, height: f32, depth: f32) -> Self {
-        let x = (self.x() + 1.) * width / 2.;
-        let y = (self.y() + 1.) * height / 2.;
+        let x = ((self.x() + 1.) * width / 2.).clamp(0.0, width - 1.0);
+        let y = ((self.y() + 1.) * height / 2.).clamp(0.0, height - 1.0);
         let z = (self.z() + 1.) * depth / 2.;
 
         Self(x, y, z)
@@ -59,6 +53,12 @@ impl Vec3<f32> {
 
 impl From<Vec3<f32>> for Vec3<isize> {
     fn from(value: Vec3<f32>) -> Self {
+        Self(value.0 as isize, value.1 as isize, value.2 as isize)
+    }
+}
+
+impl From<Vec3<usize>> for Vec3<isize> {
+    fn from(value: Vec3<usize>) -> Self {
         Self(value.0 as isize, value.1 as isize, value.2 as isize)
     }
 }

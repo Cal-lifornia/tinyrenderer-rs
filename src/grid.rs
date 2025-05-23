@@ -1,16 +1,12 @@
-#[derive(Clone, Copy)]
-pub struct Point {
-    pub x: usize,
-    pub y: usize,
-}
+use crate::Vec3;
 
 pub struct Grid<T, const W: usize, const H: usize> {
     array: [[T; W]; H],
 }
 
 impl<T, const W: usize, const H: usize> Grid<T, W, H> {
-    pub fn get(&self, p: &Point) -> &T {
-        &self.array[p.y][p.x]
+    pub fn get(&self, v: &Vec3<usize>) -> &T {
+        &self.array[v.y()][v.x()]
     }
 
     /// How many elements are in the grid?
@@ -31,13 +27,13 @@ impl<T, const W: usize, const H: usize> Grid<T, W, H> {
     /// the desired value of that item.
     pub fn set_all_parallel<F>(&mut self, setter: F)
     where
-        F: Send + Sync + Fn(Point) -> Option<T>,
+        F: Send + Sync + Fn(Vec3<usize>) -> Option<T>,
         T: Send,
     {
         use rayon::prelude::*;
         self.array.par_iter_mut().enumerate().for_each(|(y, row)| {
             for (x, item) in row.iter_mut().enumerate() {
-                if let Some(val) = setter(Point { x, y }) {
+                if let Some(val) = setter(Vec3::new(x, y, 1)) {
                     *item = val;
                 }
             }
