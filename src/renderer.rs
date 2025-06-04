@@ -1,120 +1,31 @@
-use std::mem::swap;
+use std::sync::mpsc::Sender;
 
 use rayon::prelude::*;
 
-use crate::{signed_triangle_area, Vec3};
+use crate::{
+    boundingbox::BoundingBox,
+    grid::GridPoint,
+    vec3::{signed_triangle_area, Colour, Point3},
+};
 
-// pub struct Renderer {
-//     pub filename: &'static str,
-//     pub output_dir: &'static str,
-// }
-
-// pub fn draw_triangle<const W: usize, const H: usize>(
-//     v1: Vec3<isize>,
-//     v2: Vec3<isize>,
-//     v3: Vec3<isize>,
-//     pixels: &mut Grid<[u8; 3], W, H>,
-//     colour: [u8; 3],
-// ) {
-//     let total_area = signed_triangle_area(v1.x(), v1.y(), v2.x(), v2.y(), v3.x(), v3.y());
-//     if total_area < 1.0 {
-//         return;
-//     }
-
-//     pixels.set_all_parallel(calculate_pixel(total_area, v1, v2, v3, colour))
-// }
-
-pub fn calculate_pixel(
+pub fn raster_triangle(
+    p1: &Point3,
+    p2: &Point3,
+    p3: &Point3,
     total_area: f64,
-    v1: Vec3<isize>,
-    v2: Vec3<isize>,
-    v3: Vec3<isize>,
-    colour: [u8; 3],
-) -> impl Send + Sync + Fn(Vec3<usize>) -> Option<[u8; 3]> {
-    move |vec| {
-        // println!("x: {}, y: {}", point.x, point.y);
-        let alpha = signed_triangle_area(vec.into(), v2, v3) / total_area;
-        let beta = signed_triangle_area(vec.into(), v3, v1) / total_area;
-        let gamma = signed_triangle_area(vec.into(), v1, v2) / total_area;
-        if alpha < 0.0 || beta < 0.0 || gamma < 0.0 {
-            None
-        } else {
-            // let printer: Vec3<isize> = vec.into();
-            // println!("vec: {},{},{}", printer.x(), printer.y(), printer.z());
-            // println!("v1: {},{},{}", v1.x(), v1.y(), v1.z());
-            // println!("v2: {},{},{}", v2.x(), v2.y(), v2.z());
-            // println!("v3: {},{},{}", v3.x(), v3.y(), v3.z());
-            // println!("a: {}, b: {}, g: {}", alpha, beta, gamma);
-            Some(colour)
-        }
-    }
+    colour: &Colour,
+    chan: Sender<(GridPoint, [u8; 3])>,
+) {
+    let bbox = BoundingBox::new(p1, p2, p3);
+    (bbox.min_x..=bbox.max_x).into_par_iter().for_each(|x| {
+        (bbox.min_y..=bbox.max_y).for_each(|y| {
+            let point = Point3::new(x as f64, y as f64, 0.0);
+            let alpha = signed_triangle_area(&point, p2, p3) / total_area;
+            let beta = signed_triangle_area(&point, p3, p1) / total_area;
+            let gamma = signed_triangle_area(&point, p1, p2) / total_area;
+            if !(alpha < 0.0 || beta < 0.0 || gamma < 0.0) {
+                chan.send((GridPoint { x, y }, colour.to_rgb())).unwrap();
+            }
+        });
+    });
 }
-
-// let alpha = signed_triangle_area(
-//     vec.x() as isize,
-//     vec.y() as isize,
-//     v2.x(),
-//     v2.y(),
-//     v3.x(),
-//     v3.y(),
-// ) / total_area;
-// let beta = signed_triangle_area(
-//     vec.x() as isize,
-//     vec.y() as isize,
-//     v3.x(),
-//     v3.y(),
-//     v1.x(),
-//     v1.y(),
-// ) / total_area;
-// let gamma = signed_triangle_area(
-//     vec.x() as isize,
-//     vec.y() as isize,
-//     v1.x(),
-//     v1.y(),
-//     v2.x(),
-//     v2.y(),
-// ) / total_area;
-// if p1.y() > p2.y() {
-//     swap(&mut p1, &mut p2);
-// }
-// if p1.y() > p3.y() {
-//     swap(&mut p1, &mut p3);
-// }
-
-// if p2.y() > p3.y() {
-//     swap(&mut p2, &mut p3);
-// }
-
-// let total_height = p3.y() - p1.y();
-// if p1.y() != p2.y() {
-//     let segment_height = p2.y() - p1.y();
-//     // for y in p1.y()..=p2.y() {
-//     //     let x1 = p1.x() + ((p3.x() - p1.x()) * (y - p1.y())) / total_height;
-//     //     let x2 = p1.x() + ((p2.x() - p1.x()) * (y - p1.y())) / segment_height;
-
-//     //     // image.put_pixel(x1 as u32, y as u32, RED);
-//     //     // image.put_pixel(x2 as u32, y as u32, GREEN);
-//     //     draw_line(x1, y, x2, y, image, GREEN)
-//     // }
-//     (p1.y()..=p2.y()).into_par_iter().for_each(|y| {
-//         let x1 = p1.x() + ((p3.x() - p1.x()) * (y - p1.y())) / total_height;
-//         let x2 = p1.x() + ((p2.x() - p1.x()) * (y - p1.y())) / segment_height;
-
-//         // image.put_pixel(x1 as u32, y as u32, RED);
-//         // image.put_pixel(x2 as u32, y as u32, GREEN);
-
-//         for x in x1.min(x2)..x1.max(x2) {}
-//     });
-// }
-// if p2.y() != p3.y() {
-//     let segment_height = p3.y() - p2.y();
-//     for y in p2.y()..=p3.y() {
-//         let x1 = p1.x() + ((p3.x() - p1.x()) * (y - p1.y())) / total_height;
-//         let x2 = p2.x() + ((p3.x() - p2.x()) * (y - p2.y())) / segment_height;
-//         draw_line(x1, y, x2, y, image, GREEN);
-//     }
-// }
-
-// draw_line(p1.x(), p1.y(), p2.x(), p2.y(), image, colour);
-// draw_line(p2.x(), p2.y(), p3.x(), p3.y(), image, colour);
-// draw_line(p3.x(), p3.y(), p1.x(), p1.y(), image, colour);

@@ -1,12 +1,18 @@
-use crate::Vec3;
-
+pub struct GridPoint {
+    pub x: usize,
+    pub y: usize,
+}
 pub struct Grid<T, const W: usize, const H: usize> {
     array: [[T; W]; H],
 }
 
 impl<T, const W: usize, const H: usize> Grid<T, W, H> {
-    pub fn get(&self, v: &Vec3<usize>) -> &T {
-        &self.array[v.y()][v.x()]
+    pub fn get(&self, x: usize, y: usize) -> &T {
+        &self.array[y][x]
+    }
+
+    pub fn set(&mut self, location: GridPoint, data: T) {
+        self.array[location.y][location.x] = data;
     }
 
     /// How many elements are in the grid?
@@ -27,13 +33,13 @@ impl<T, const W: usize, const H: usize> Grid<T, W, H> {
     /// the desired value of that item.
     pub fn set_all_parallel<F>(&mut self, setter: F)
     where
-        F: Send + Sync + Fn(Vec3<usize>) -> Option<T>,
+        F: Send + Sync + Fn(GridPoint) -> Option<T>,
         T: Send,
     {
         use rayon::prelude::*;
         self.array.par_iter_mut().enumerate().for_each(|(y, row)| {
             for (x, item) in row.iter_mut().enumerate() {
-                if let Some(val) = setter(Vec3::new(x, y, 1)) {
+                if let Some(val) = setter(GridPoint { x, y }) {
                     *item = val;
                 }
             }
