@@ -1,78 +1,50 @@
 {
-  description = "A Nix-flake-based Rust development environment";
 
   inputs = {
-    nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1";
-    rust-overlay = {
-      url = "github:oxalica/rust-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
+    rust-overlay.url = "github:oxalica/rust-overlay";
   };
 
   outputs =
-    inputs:
-    let
-      supportedSystems = [
-        "x86_64-linux"
-        "aarch64-linux"
-        "x86_64-darwin"
-        "aarch64-darwin"
-      ];
-      forEachSupportedSystem =
-        f:
-        inputs.nixpkgs.lib.genAttrs supportedSystems (
-          system:
-          f {
-            pkgs = import inputs.nixpkgs {
-              inherit system;
-              overlays = [
-                inputs.rust-overlay.overlays.default
-                inputs.self.overlays.default
-              ];
-            };
-          }
-        );
-    in
     {
-      overlays.default = final: prev: {
-        rustToolchain =
-          let
-            rust = prev.rust-bin;
-          in
-          if builtins.pathExists ./rust-toolchain.toml then
-            rust.fromRustupToolchainFile ./rust-toolchain.toml
-          else if builtins.pathExists ./rust-toolchain then
-            rust.fromRustupToolchainFile ./rust-toolchain
-          else
-            rust.stable.latest.default.override {
-              extensions = [
-                "rust-src"
-                "rustfmt"
-              ];
-            };
-      };
-
-      devShells = forEachSupportedSystem (
-        { pkgs }:
-        {
-          default = pkgs.mkShell {
-            packages = with pkgs; [
-              rustToolchain
-              openssl
+      nixpkgs,
+      flake-utils,
+      rust-overlay,
+      ...
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
+      let
+        overlays = [ (import rust-overlay) ];
+        pkgs = import nixpkgs {
+          inherit system overlays;
+        };
+        lib = pkgs.lib;
+      in
+      {
+        devShells = {
+          default = pkgs.mkShell rec {
+            nativeBuildInputs = with pkgs; [
               pkg-config
-              cargo-deny
-              cargo-edit
-              cargo-watch
+              clang
+              # lld is much faster at linking than the default Rust linker
+              # lld
+            ];
+            buildInputs = with pkgs; [
+              # rust toolchain
+              # use rust-analyzer-nightly for better type inference
               rust-analyzer
-              imagemagick
+              # cargo-watch
+              # cargo-flamegraph
+              # gnuplot
+              # cargo-xwin
+              (rust-bin.stable.latest.default)
             ];
 
-            env = {
-              # Required by rust-analyzer
-              RUST_SRC_PATH = "${pkgs.rustToolchain}/lib/rustlib/src/rust/library";
-            };
+            LD_LIBRARY_PATH = lib.makeLibraryPath buildInputs;
           };
-        }
-      );
-    };
+        };
+      }
+    );
 }
